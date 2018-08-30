@@ -1,18 +1,13 @@
 
-const userRoutes = require('./user');
+import userRoutes from './user';
 
 const routes = {
   '/user': userRoutes,
 };
 
 
-
-module.exports = (app, versionAPI) => {
-  for (let key in routes) {
-    if (!key.startsWith('/')) {
-      app.use(versionAPI, routes[key]);
-    } else {
-      app.use(versionAPI + key, routes[key]);
-    }
-  }
+export default (app, versionAPI) => {
+  routes.forEach((key) => {
+    app.use(versionAPI + key, routes[key]);
+  });
 };

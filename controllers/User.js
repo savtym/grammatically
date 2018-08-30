@@ -1,27 +1,21 @@
-const db = require('../db');
-const bcrypt = require('bcrypt');
-const jwt = require('jsonwebtoken');
+import bcrypt from 'bcrypt';
+import jwt from 'jsonwebtoken';
+
+import db from '../db';
+import { GET_USER_DB, INSERT_USER_DB } from '../db/user';
 
 const addSalt = '‘ß˚ç';
 
 
-const {
-  GET_USER_DB,
-  INSERT_USER_DB,
-} = require('../db/user');
-
-
-
 class User {
-
   /**
    * Permissions for condition user by request with headers Authorization
    * @param {Request} req
    * @param {Response} res
    * @return {boolean|User} false - if token is wrong, User - object
    * */
-  static async permissions(req, res) {
-    const { rows, err } = await db.query(GET_USER_DB('token'), [req.token]);
+  static async permissions({ token }, res) {
+    const { rows, err } = await db.query(GET_USER_DB('token'), [token]);
 
     if (err) {
       res.status(400).json(err.message);
@@ -29,7 +23,7 @@ class User {
     }
 
     if (rows.length === 0) {
-      res.status(401).json('');
+      res.status(401).json();
       return false;
     }
 
@@ -69,16 +63,15 @@ class User {
    * @param {Response} res
    * @return {object} token is string
    * */
-  static async signUpUser(req, res) {
-    const { body } = req;
-    let answer = await User._conditionUser(body);
+  static async signUpUser({ body }, res) {
+    let { err, rows } = await User.conditionUser(body);
 
-    if (answer.err) {
-      res.status(400).json(answer.err.message);
+    if (err) {
+      res.status(400).json(err.message);
       return;
     }
 
-    if (answer.rows.length !== 0) {
+    if (rows.length !== 0) {
       res.status(400).json(`This email ${body.email} is exist.`);
       return;
     }
@@ -88,14 +81,14 @@ class User {
     const hash = bcrypt.hashSync(password + addSalt, salt);
     const token = User.getToken(email, username, hash);
 
-    answer = await db.query(INSERT_USER_DB, [email, username, token, hash, salt]);
+    ({ err, rows } = await db.query(INSERT_USER_DB, [email, username, token, hash, salt]));
 
-    if (answer.err) {
-      res.status(400).json(answer.err.message);
+    if (err) {
+      res.status(400).json(err.message);
       return;
     }
 
-    res.json({ token }); // email, username,
+    res.json({ token });
   }
 
 
@@ -105,9 +98,10 @@ class User {
    * @param {Response} res
    * @return {object} token is string
    * */
-  static async signInUser(req, res) {
-    const { email, password } = req.body;
-    const { rows, err } = await db.query(GET_USER_DB('email', 'OR username = $1'), [email]);
+  static async signInUser({ body: { password, email: sendEmail } }, res) {
+    const { rows, err } = await db.query(
+      GET_USER_DB('email', 'OR username = $1'), [sendEmail],
+    );
 
     if (err) {
       res.status(400).json(err.message);
@@ -115,13 +109,23 @@ class User {
     }
 
     if (rows.length === 0) {
-      res.status(400).json(`This email ${email} isn't exist.`);
+      res.status(400).json(`This email ${sendEmail} isn't exist.`);
       return;
     }
 
-    const user = rows[0];
-    if (bcrypt.compareSync(password + addSalt, user.hash)) {
-      res.json({ email: user.email, username: user.username, token: user.token }); // email: user.email,
+    const [{
+      hash,
+      token,
+      email,
+      username,
+    }] = rows;
+
+    if (bcrypt.compareSync(password + addSalt, hash)) {
+      res.json({
+        token,
+        email,
+        username,
+      });
     } else {
       res.status(400).json('Wrong password.');
     }
@@ -138,8 +142,11 @@ class User {
   static getToken(email, username, hash) {
     return jwt.sign({
       email,
-      username
-    }, process.env.JWT_SECRET + hash || 'M7BUb2Oyhll2ciPsWKQw0KZPJ9CEoc9gcVpVb1uaVCVyHKTB9XiJs0BTngtep45' + hash);
+      username,
+    }, (
+      process.env.JWT_SECRET + hash
+      || `M7BUb2Oyhll2ciPsWKQw0KZPJ9CEoc9gcVpVb1uaVCVyHKTB9XiJs0BTngtep45${hash}`
+    ));
   }
 
 
@@ -151,15 +158,20 @@ class User {
    * @param {string} repeat_password
    * @return {boolean|User}
    * */
-  static async _conditionUser({ email, username, password, repeat_password }) {
-    return new Promise(resolve => {
-      if (typeof(email) !== 'string'
+  static async conditionUser({
+    email,
+    username,
+    password,
+    repeat_password: repeatPassword,
+  }) {
+    return new Promise((resolve) => {
+      if (typeof (email) !== 'string'
         || !User.validateEmail(email)
-        || typeof(username) !== 'string'
+        || typeof (username) !== 'string'
         || username.length < 6
-        || typeof(password) !== 'string'
-        || typeof(repeat_password) !== 'string'
-        || password !== repeat_password
+        || typeof (password) !== 'string'
+        || typeof (repeatPassword) !== 'string'
+        || password !== repeatPassword
         || password.length < 8) {
         resolve({ err: { message: 'Name, email or pass are wrong' } });
       }
@@ -175,10 +187,12 @@ class User {
    * @return {boolean} check email by regex
    * */
   static validateEmail(email) {
-    const re = /^(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+    /* eslint-disable */
+    const re = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+		/* eslint-enable */
     return re.test(email);
   }
 }
 
 
-module.exports = User;
+export default User;

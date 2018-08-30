@@ -1,13 +1,14 @@
-const express = require('express');
-const router = express.Router();
-const model = require('../controllers/User');
+import express from 'express';
+import User from '../controllers/User';
+
+const router = express.Router({});
 
 
 router.route('/signup')
-  .post(model.signUpUser);
+  .post(User.signUpUser);
 
 router.route('/signin')
-  .post(model.signInUser);
+  .post(User.signInUser);
 
 
-module.exports = router;
+export default router;
