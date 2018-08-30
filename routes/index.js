@@ -1,4 +1,3 @@
-
 import userRoutes from './user';
 
 const routes = {
@@ -7,7 +6,7 @@ const routes = {
 
 
 export default (app, versionAPI) => {
-  routes.forEach((key) => {
+  Object.keys(routes).forEach((key) => {
     app.use(versionAPI + key, routes[key]);
   });
 };
