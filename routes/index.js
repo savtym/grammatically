@@ -1,18 +1,16 @@
 
 const userRoutes = require('./user');
-const socketRoutes = require('./socket');
 
 const routes = {
   '/user': userRoutes,
-  'socket': socketRoutes,
 };
 
 
 
-module.exports = (app, socket, versionAPI) => {
+module.exports = (app, versionAPI) => {
   for (let key in routes) {
     if (!key.startsWith('/')) {
-      app.use(versionAPI, routes[key](socket));
+      app.use(versionAPI, routes[key]);
     } else {
       app.use(versionAPI + key, routes[key]);
     }
