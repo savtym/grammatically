@@ -5,7 +5,7 @@ import bearerToken from 'express-bearer-token';
 import cors from 'cors';
 import http from 'http';
 
-import routes from './routes';
+import routes from './routes/index';
 // Constants
 const PORT = process.env.PORT || 5000;
 const HOST = process.env.HOST || '0.0.0.0';

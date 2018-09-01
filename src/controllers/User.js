@@ -1,62 +1,13 @@
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 
-import db from '../db';
+import db from '../db/index';
 import { GET_USER_DB, INSERT_USER_DB } from '../db/user';
 
 const addSalt = '‘ß˚ç';
 
 
 class User {
-  /**
-   * Permissions for condition user by request with headers Authorization
-   * @param {Request} req
-   * @param {Response} res
-   * @return {boolean|User} false - if token is wrong, User - object
-   * */
-  static async permissions({ token }, res) {
-    const { rows, err } = await db.query(GET_USER_DB('token'), [token]);
-
-    if (err) {
-      res.status(400).json(err.message);
-      return false;
-    }
-
-    if (rows.length === 0) {
-      res.status(401).json();
-      return false;
-    }
-
-    return rows[0];
-  }
-
-
-  /**
-   * Permissions for condition user by token
-   * @param {string} token: token for authorization
-   * @return {object|User} object - if token is wrong, User - object
-   * */
-  static async permissionsToken(token) {
-    const { rows, err } = await db.query(GET_USER_DB('token'), [token]);
-
-    if (err || !token) {
-      return {
-        err: err ? err.message : 'You need to send token',
-        status: 400,
-      };
-    }
-
-    if (rows.length === 0) {
-      return {
-        err: 'Incorrect token.',
-        status: 401,
-      };
-    }
-
-    return rows[0];
-  }
-
-
   /**
    * Sign up user
    * @param {Request} req, { email, username, password, repeat_password }
@@ -96,39 +47,36 @@ class User {
    * Sign in user
    * @param {Request} req, {email, password}
    * @param {Response} res
-   * @return {object} token is string
    * */
-  static async signInUser({ body: { password, email: sendEmail } }, res) {
-    const { rows, err } = await db.query(
-      GET_USER_DB('email', 'OR username = $1'), [sendEmail],
-    );
+  static async signInUser({ body: { password, email } }, res) {
+    const { rows, err } = await db.query(GET_USER_DB, [email]);
 
     if (err) {
-      res.status(400).json(err.message);
-      return;
+      return res.status(400).json({
+        err: err.message,
+      });
     }
 
     if (rows.length === 0) {
-      res.status(400).json(`This email ${sendEmail} isn't exist.`);
-      return;
+      return res.status(400).json(`This email ${email} isn't exist.`);
     }
 
     const [{
       hash,
       token,
-      email,
       username,
     }] = rows;
 
     if (bcrypt.compareSync(password + addSalt, hash)) {
-      res.json({
+      return res.json({
         token,
-        email,
         username,
       });
-    } else {
-      res.status(400).json('Wrong password.');
     }
+
+    return res.status(400).json({
+      err: 'Wrong password.',
+    });
   }
 
 

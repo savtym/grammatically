@@ -8,7 +8,7 @@ export default {
     resolve => pool.query(
       text,
       params,
-      (err, data) => resolve(Object.assign({}, { err }, data)),
+      (err, data = {}) => resolve(Object.assign({}, { err }, data)),
     ),
   ),
 };
