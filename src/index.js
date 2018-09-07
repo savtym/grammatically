@@ -16,22 +16,22 @@ const server = http.Server(app);
 
 // CORS
 app.use(cors({
-  origin: process.env.FRONTEND_URI || 'http://localhost:8080',
-  optionsSuccessStatus: 200,
+	origin: process.env.FRONTEND_URI || 'http://localhost:8080',
+	optionsSuccessStatus: 200,
 }));
 
 
 app.use(bearerToken());
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({
-  extended: true,
+	extended: true,
 }));
 
 // Add routes for API
 routes(app, '/api/v1');
 
 app.use(express.static(
-  path.resolve(__dirname, '..', 'dist'),
+	path.resolve(__dirname, '..', 'dist'),
 ));
 
 app.get('/', (req, res) => res.send('It\'s back-end side. Please, study documentation.'));

@@ -6,15 +6,15 @@ const router = express.Router({});
 
 
 router.route('/signup')
-  .post(User.signUpUser);
+	.post(User.signUpUser);
 
 router.route('/signin')
-  .post(User.signInUser);
+	.post(User.signInUser);
 
 
 router.route('/test')
-  .post(permissions(['admin']), (user, req, res) => {
-		res.json(user)
+	.post(permissions(['admin']), (user, req, res) => {
+		res.json(user);
 	});
 
 export default router;
