@@ -1,6 +1,6 @@
-##Server 
+## Server 
 
-###Install
+### Install
 First, you need to install [postgres](https://www.postgresql.org/download/) or using brew
 ```sh
 brew update
@@ -28,7 +28,7 @@ npm run server
 ```
 
 
-###Pulling a new version
+### Pulling a new version
 Refresh migrations:
 ```sh
 npm run db:refresh
@@ -36,13 +36,13 @@ npm run db:refresh
 
 
 
-###Authorization
+### Authorization
 For authorization needs to add to headers:
 `Authorization: Bearer ${token}`
 
 
 
-###API
+### API
 You need to add `/api/v1` to route.
 
 For route `/user`:
