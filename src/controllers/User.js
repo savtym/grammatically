@@ -1,5 +1,6 @@
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
+import config from 'config';
 
 import db from '../db/index';
 import { GET_USER_DB, INSERT_USER_DB } from '../db/user';
@@ -15,31 +16,31 @@ class User {
    * @return {object} token is string
    * */
 	static async signUpUser({ body }, res) {
-		let { err, rows } = await User.conditionUser(body);
+		const {
+			email,
+			username,
+			password,
+		} = body;
 
-		if (err) {
-			res.status(400).json(err.message);
-			return;
-		}
+		const role = body.role || 'user';
 
-		if (rows.length !== 0) {
-			res.status(400).json(`This email ${body.email} is exist.`);
-			return;
-		}
-
-		const { email, username, password } = body;
 		const salt = bcrypt.genSaltSync();
 		const hash = bcrypt.hashSync(password + addSalt, salt);
-		const token = User.getToken(email, username, hash);
+		const token = jwt.sign(
+			{ email, username },
+			process.env.JWT_SECRET + hash || config.JWT + config,
+		);
 
-		({ err, rows } = await db.query(INSERT_USER_DB, [email, username, token, hash, salt]));
+		const { err } = await db.query(
+			INSERT_USER_DB,
+			[email, username, token, hash, salt, role],
+		);
 
 		if (err) {
-			res.status(400).json(err.message);
-			return;
+			return res.status(400).json({ err: err.detail });
 		}
 
-		res.json({ token });
+		return res.json({ token, role });
 	}
 
 
@@ -48,23 +49,23 @@ class User {
    * @param {Request} req, {email, password}
    * @param {Response} res
    * */
-	static async signInUser({ body: { password, email } }, res) {
-		const { rows, err } = await db.query(GET_USER_DB, [email]);
+	static async signInUser({ body }, res) {
+		const { password, email: uniqueField } = body;
+		const { rows, err } = await db.query(GET_USER_DB, [uniqueField]);
 
 		if (err) {
-			return res.status(400).json({
-				err: err.message,
-			});
+			return res.status(400).json({ err: err.message });
 		}
 
 		if (rows.length === 0) {
-			return res.status(400).json(`This email ${email} isn't exist.`);
+			return res.status(400).json({ err: `This email/username [${uniqueField}] isn't exist.` });
 		}
 
 		const [{
 			role,
 			hash,
 			token,
+			email,
 			username,
 		}] = rows;
 
@@ -72,6 +73,7 @@ class User {
 			return res.json({
 				role,
 				token,
+				email,
 				username,
 			});
 		}
@@ -79,68 +81,6 @@ class User {
 		return res.status(400).json({
 			err: 'Wrong password.',
 		});
-	}
-
-
-	/**
-   * Get token
-   * @param {string} email
-   * @param {string} username
-   * @param {string} hash
-   * @return {string} token
-   * */
-	static getToken(email, username, hash) {
-		return jwt.sign({
-			email,
-			username,
-		}, (
-			process.env.JWT_SECRET + hash
-      || `M7BUb2Oyhll2ciPsWKQw0KZPJ9CEoc9gcVpVb1uaVCVyHKTB9XiJs0BTngtep45${hash}`
-		));
-	}
-
-
-	/**
-   * Condition user by params for sign up
-   * @param {object} email
-   * @param {string} username
-   * @param {string} password
-   * @param {string} repeat_password
-   * @return {boolean|User}
-   * */
-	static async conditionUser({
-		email,
-		username,
-		password,
-		repeat_password: repeatPassword,
-	}) {
-		return new Promise((resolve) => {
-			if (typeof (email) !== 'string'
-        || !User.validateEmail(email)
-        || typeof (username) !== 'string'
-        || username.length < 6
-        || typeof (password) !== 'string'
-        || typeof (repeatPassword) !== 'string'
-        || password !== repeatPassword
-        || password.length < 8) {
-				resolve({ err: { message: 'Name, email or pass are wrong' } });
-			}
-
-			resolve(db.query(GET_USER_DB, [email]));
-		});
-	}
-
-
-	/**
-   * Validate email
-   * @param {string} email
-   * @return {boolean} check email by regex
-   * */
-	static validateEmail(email) {
-		/* eslint-disable */
-    const re = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
-		/* eslint-enable */
-		return re.test(email);
 	}
 }
 

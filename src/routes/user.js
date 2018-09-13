@@ -1,20 +1,21 @@
 import express from 'express';
-import { permissions } from 'utils/user';
+import condition from 'utils/condition';
 import User from '../controllers/User';
 
 const router = express.Router({});
 
 
 router.route('/signup')
-	.post(User.signUpUser);
+	.post(
+		condition(['email', 'username', 'password', 'repeat_password']),
+		User.signUpUser,
+	);
 
 router.route('/signin')
-	.post(User.signInUser);
+	.post(
+		condition(['email', 'password']),
+		User.signInUser,
+	);
 
-
-router.route('/test')
-	.post(permissions(['admin']), (user, req, res) => {
-		res.json(user);
-	});
 
 export default router;

@@ -1,16 +1,22 @@
-import config from 'config';
 import { GET_USER } from '../db/user';
 import db from '../db/index';
 
+
+const besidesParamsFromUser = [
+	'salt',
+	'hash',
+];
+
 export const permissions = roles => async (req, res, next) => {
-	const { token } = req.body;
-	if (!token || !token.startsWith(config.permissionsString)) {
-		return res.status(400).json({ err: 'Have problem with token' });
+	const { token } = req;
+
+	if (!token) {
+		return res.status(400).json({ err: 'Have a problem with token' });
 	}
 
 	const data = await db.query(
 		GET_USER,
-		[req.body.token.replace(config.permissionsString, '')],
+		[token],
 	);
 
 	if (data.err) {
@@ -27,7 +33,11 @@ export const permissions = roles => async (req, res, next) => {
 		return res.status(403).json();
 	}
 
-	return next(user);
+	res.locals.user = Object.keys(user)
+		.filter(key => !besidesParamsFromUser.includes(key))
+		.reduce((p, key) => Object.assign(p, { [key]: user[key] }), {});
+
+	return next();
 };
 
 

@@ -24,7 +24,7 @@ npm run db:up
 
 Third, for start you need to run command:
 ```sh
-npm run server
+npm run start
 ```
 
 
@@ -47,10 +47,10 @@ You need to add `/api/v1` to route.
 
 For route `/user`:
 
-Route   | Params                                        | Return
---------|-----------------------------------------------|------------------------
-/signup | email, username, password, repeat_password    | token
-/signin | email, password                               | username, token, role
+Route   | Params                                               | Return
+--------|------------------------------------------------------|------------------------
+/signup | email, username, password, repeat_password, role?    | token, role
+/signin | email(username), password                            | email, username, token, role
 
 
 Example: `/api/v1/user/signin` with params `email` and `password`.
