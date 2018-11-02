@@ -39,6 +39,3 @@ export const permissions = roles => async (req, res, next) => {
 
 	return next();
 };
-
-
-export const d = '';
