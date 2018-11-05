@@ -1,37 +1,19 @@
 ## Server 
 
 ### Install
-First, you need to install [postgres](https://www.postgresql.org/download/) or using brew
+You need to install docker
+Install Docker Compose on your system.
+After, you start these command in bash: 
 ```sh
-brew update
-brew doctor
-brew install postgresql
+docker-compose up --build 
 ```
-
-and create database for Grammatically:
-
-```sh
-psql
-CREATE DATABASE grammatically;
-```
-
-Also you should have `nodejs` with `npm`
-
-Second, start migrations for database:
-```sh
-npm run db:up
-```
-
-Third, for start you need to run command:
-```sh
-npm run start
-```
-
+So you can see backend by port `localhost:5000`
 
 ### Pulling a new version
 Refresh migrations:
 ```sh
-npm run db:refresh
+docker-compose down
+docker-compose up --build 
 ```
 
 

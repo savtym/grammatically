@@ -32,7 +32,7 @@
   "scripts": {
     "heroku-postbuild": "npm install",
     "start": "NODE_PATH=src babel-node src/index.js",
-    "start:dev": "NODE_PATH=src nodemon src/index.js --exec babel-node",
+    "start:dev": "NODE_PATH=src nodemon -L src --exec babel-node",
     "db:refresh": "npm-run-all db:reset db:up",
     "db:reset": "db-migrate -m migrations --config src/config/db.json reset",
     "db:up": "db-migrate -m migrations --config src/config/db.json up"

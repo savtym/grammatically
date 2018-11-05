@@ -1,7 +1,7 @@
 {
   "dev": {
     "driver": "pg",
-    "user": "postgres",
+    "user": "grammatically",
     "host": "postgres",
     "password": "",
     "port": 5432,
