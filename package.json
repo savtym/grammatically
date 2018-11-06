@@ -23,16 +23,17 @@
   "dependencies": {
     "bcrypt": "^3.0.0",
     "body-parser": "^1.18.3",
+    "cors": "^2.8.4",
+    "cross-env": "^5.2.0",
     "express": "^4.16.3",
     "express-bearer-token": "^2.2.0",
     "jsonwebtoken": "^8.3.0",
-    "pg": "^7.4.3",
-    "cors": "^2.8.4"
+    "pg": "^7.4.3"
   },
   "scripts": {
     "heroku-postbuild": "npm install",
-    "start": "NODE_PATH=src babel-node src/index.js",
-    "start:dev": "NODE_PATH=src nodemon -L src --exec babel-node",
+    "start": "cross-env NODE_ENV=production NODE_PATH=src babel-node src",
+    "start:dev": "cross-env NODE_ENV=development NODE_PATH=src nodemon -L src --exec babel-node",
     "db:refresh": "npm-run-all db:reset db:up",
     "db:reset": "db-migrate -m migrations --config src/config/db.json reset",
     "db:up": "db-migrate -m migrations --config src/config/db.json up"
